@@ -3,14 +3,15 @@
 from __future__ import annotations
 import json, os, random, time
 import requests
+import config
 from gemini_client import get_client
 
 class AIRouter:
     def __init__(self):
-        self.keys=[k.strip() for k in os.getenv('OPENROUTER_API_KEYS','').split(',') if k.strip()]
-        self.models=[m.strip() for m in os.getenv('OPENROUTER_MODELS','google/gemini-2.5-flash,openai/gpt-4o-mini').split(',') if m.strip()]
-        self.timeout=max(10,int(os.getenv('AI_REQUEST_TIMEOUT','60')))
-        self.retries=max(1,min(3,int(os.getenv('AI_RETRIES','2'))))
+        self.keys=list(config.OPENROUTER_API_KEYS)
+        self.models=list(config.OPENROUTER_MODELS)
+        self.timeout=config.AI_REQUEST_TIMEOUT
+        self.retries=config.AI_RETRIES
     def generate(self,prompt:str,generation_config:dict|None=None)->str:
         errors=[]
         try:
@@ -28,8 +29,14 @@ class AIRouter:
                         data=response.json()
                         return data['choices'][0]['message']['content']
                     except Exception as exc:
-                        errors.append(f'OpenRouter/{model}: {exc}')
+                        status_code = getattr(locals().get('response'), 'status_code', None)
+                        if status_code in (401, 403):
+                            errors.append(f'OpenRouter/{model}: Unauthorized (تحقق من OPENROUTER_API_KEY/OPENROUTER_API_KEYS)')
+                        else:
+                            errors.append(f'OpenRouter/{model}: {exc}')
                         if attempt+1<self.retries: time.sleep(0.5*(2**attempt))
+        if not keys:
+            raise RuntimeError('لا يوجد مفتاح OpenRouter احتياطي مضبوط. أضف OPENROUTER_API_KEY أو OPENROUTER_API_KEYS في Environment Variables.')
         raise RuntimeError('فشل جميع مزودي الذكاء الاصطناعي: ' + ' | '.join(errors[-4:]))
 
 _router=None

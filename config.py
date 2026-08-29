@@ -30,6 +30,15 @@ TRANSCRIPT_API_KEY = (os.getenv("TRANSCRIPT_API_KEY", "").strip() or
 TRANSCRIPT_API_BASE = os.getenv("TRANSCRIPT_API_BASE", "https://transcriptapi.com/api/v2").rstrip("/")
 TRANSCRIPT_API_TIMEOUT = int(os.getenv("TRANSCRIPT_API_TIMEOUT", "45"))
 
+# مفاتيح OpenRouter الاحتياطية: دعم المفتاح المفرد أو قائمة مفاتيح مفصولة بفواصل.
+_raw_openrouter_keys = os.getenv("OPENROUTER_API_KEYS", "").strip()
+if not _raw_openrouter_keys:
+    _raw_openrouter_keys = os.getenv("OPENROUTER_API_KEY", "").strip()
+OPENROUTER_API_KEYS = [k.strip().strip('"').strip("'") for k in _raw_openrouter_keys.split(",") if k.strip()]
+OPENROUTER_MODELS = [m.strip() for m in os.getenv("OPENROUTER_MODELS", "google/gemini-2.5-flash,openai/gpt-4o-mini").split(",") if m.strip()]
+AI_REQUEST_TIMEOUT = max(10, int(os.getenv("AI_REQUEST_TIMEOUT", "60")))
+AI_RETRIES = max(1, min(3, int(os.getenv("AI_RETRIES", "2"))))
+
 # الحد الأقصى لحجم الملفات المرفوعة (بايت) — تليجرام نفسه بيحدد بحد أقصى ~20MB للبوتات العادية
 MAX_FILE_SIZE = 20 * 1024 * 1024
 
