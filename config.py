@@ -5,15 +5,20 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+# تحميل .env من مجلد المشروع نفسه، وليس من مجلد التشغيل الحالي فقط.
+_ENV_PATH = os.path.join(os.path.dirname(__file__), ".env")
+load_dotenv(dotenv_path=_ENV_PATH)
 
 # توكن بوت تليجرام (من BotFather)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 
 # مفاتيح Gemini API — يدعم أكتر من مفتاح مفصولة بفاصلة
 # مثال في .env:  GEMINI_API_KEYS=key1,key2,key3
-_raw_keys = os.getenv("GEMINI_API_KEYS", "")
-GEMINI_API_KEYS = [k.strip() for k in _raw_keys.split(",") if k.strip()]
+# دعم الصيغتين: GEMINI_API_KEYS للمفاتيح المتعددة، وGEMINI_API_KEY للمفتاح المفرد.
+_raw_keys = os.getenv("GEMINI_API_KEYS", "").strip()
+if not _raw_keys:
+    _raw_keys = os.getenv("GEMINI_API_KEY", "").strip()
+GEMINI_API_KEYS = [k.strip().strip('"').strip("'") for k in _raw_keys.split(",") if k.strip()]
 
 # اسم موديل Gemini المستخدم لتوليد الأسئلة (نص) ولقراءة الصور
 GEMINI_TEXT_MODEL = os.getenv("GEMINI_TEXT_MODEL", "gemini-2.0-flash")
