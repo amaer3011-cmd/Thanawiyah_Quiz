@@ -24,6 +24,12 @@ GEMINI_API_KEYS = [k.strip().strip('"').strip("'") for k in _raw_keys.split(",")
 GEMINI_TEXT_MODEL = os.getenv("GEMINI_TEXT_MODEL", "gemini-2.0-flash")
 GEMINI_VISION_MODEL = os.getenv("GEMINI_VISION_MODEL", "gemini-2.0-flash")
 
+# TranscriptAPI.com لجلب ترجمات YouTube
+TRANSCRIPT_API_KEY = (os.getenv("TRANSCRIPT_API_KEY", "").strip() or
+                      os.getenv("TRANSCRIPTAPI_KEY", "").strip())
+TRANSCRIPT_API_BASE = os.getenv("TRANSCRIPT_API_BASE", "https://transcriptapi.com/api/v2").rstrip("/")
+TRANSCRIPT_API_TIMEOUT = int(os.getenv("TRANSCRIPT_API_TIMEOUT", "45"))
+
 # الحد الأقصى لحجم الملفات المرفوعة (بايت) — تليجرام نفسه بيحدد بحد أقصى ~20MB للبوتات العادية
 MAX_FILE_SIZE = 20 * 1024 * 1024
 
