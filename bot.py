@@ -27,6 +27,7 @@ import content_extractor
 import quiz_generator
 import html_builder
 from store import store
+from provided_quiz_parser import parse_provided_quiz, looks_like_provided_quiz
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -135,6 +136,30 @@ async def _handle_source_impl(update: Update, context: ContextTypes.DEFAULT_TYPE
     extraction_result = None
 
     try:
+        # 0) نص أسئلة جاهز من المستخدم: لا نرسله إلى الذكاء الاصطناعي.
+        if text and looks_like_provided_quiz(text):
+            try:
+                questions = parse_provided_quiz(text)
+            except ValueError as exc:
+                await message.reply_text(f"❌ صيغة الأسئلة غير مكتملة: {exc}\n\nأرسل /help لرؤية النموذج الصحيح.")
+                return WAITING_SOURCE
+            output_path = os.path.join(config.TEMP_DIR, f"provided_quiz_{uuid.uuid4().hex}.html")
+            try:
+                html_builder.save_quiz_html(
+                    questions, output_path, exam_title="كويز مخصص",
+                    exam_type="open", duration_minutes=config.DEFAULT_DURATION_MINUTES,
+                    auto_start=True,
+                )
+                with open(output_path, "rb") as f:
+                    await context.bot.send_document(
+                        chat_id=update.effective_chat.id, document=f, filename="quiz.html",
+                        caption=f"✅ تم تحويل {len(questions)} سؤالًا إلى كويز جاهز بنفس تصميم Thanawiyah_Quiz🎯.\nافتح الملف وابدأ مباشرة."
+                    )
+            finally:
+                _cleanup(output_path)
+            context.user_data.clear()
+            return WAITING_SOURCE
+
         # 1) رابط يوتيوب
         if text and content_extractor.is_youtube_url(text):
             status_msg = await message.reply_text("📺 بجيب النص من الفيديو... لحظات.")
